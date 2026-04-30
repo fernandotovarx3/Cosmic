@@ -74,7 +74,7 @@ public class Inventory implements Iterable<Item> {
     public byte getSlotLimit() {
         lock.lock();
         try {
-            return slotLimit;
+            return 96;
         } finally {
             lock.unlock();
         }

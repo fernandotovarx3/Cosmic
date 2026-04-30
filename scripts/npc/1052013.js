@@ -1,27 +1,7 @@
 /*
-    This file is part of the HeavenMS MapleStory Server
-    Copyleft (L) 2016 - 2019 RonanLana
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation version 3 as published by
-    the Free Software Foundation. You may not use, modify or distribute
-    this program under any other version of the GNU Affero General Public
-    License.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
-/*
-    NPC ID: 1052013 
+    NPC ID: 1052013
     NPC NAME: Computer
-    @author Ronan
+    Updated for Solo Entry by Gemini
 */
 
 var status;
@@ -58,18 +38,16 @@ function action(mode, type, selection) {
                             cm.sendNext("Your team collected all the needed coupons, good work!");
                             cm.gainItem(4001007, couponsNeeded);
                             eim.clearPQ();
-
                             cm.dispose();
-
                         } else {
-                            cm.sendYesNo("Your team must collect #r" + couponsNeeded + "#k coupons to complete this instance. Talk to me when you have the right amount in hands... Or you want to #bquit now#k? Note that if you quit now #ryour team will be forced to quit#k as well.");
+                            cm.sendYesNo("Your team must collect #r" + couponsNeeded + "#k coupons to complete this instance. Talk to me when you have the right amount in hands... Or you want to #bquit now#k?");
                         }
                     } else {
-                        cm.sendYesNo("Your team must collect #r" + couponsNeeded + "#k coupons to complete this instance. Let your leader talk to me with the right amount in hands... Or you want to #bquit now#k? Note that if you quit now your team #rmay become undermanned#k to further continue this instance.");
+                        cm.sendYesNo("Your team must collect #r" + couponsNeeded + "#k coupons to complete this instance. Let your leader talk to me... Or you want to #bquit now#k?");
                     }
                 } else {
                     if (!eim.giveEventReward(cm.getPlayer())) {
-                        cm.sendOk("Please make a room on your ETC inventory to receive the prize.");
+                        cm.sendOk("Please make room on your ETC inventory to receive the prize.");
                         cm.dispose();
                     } else {
                         cm.warp(193000000);
@@ -82,29 +60,25 @@ function action(mode, type, selection) {
             }
         } else {
             var levels = ["#m190000000#", "#m191000000#", "#m192000000#", "#m195000000#", "#m196000000#", "#m197000000#"];
+            
             if (status == 0) {
-                var sendStr = "Premium Road is a place of multiple areas with monsters of most various types gathered together, an ideal place for grinding EXP and erasers for the #p1052014#. Select the area you are willing to face:\r\n\r\n#b";
+                var sendStr = "Premium Road is a place for grinding EXP and erasers. Select the area you are willing to face:\r\n\r\n#b";
                 for (var i = 0; i < 6; i++) {
                     sendStr += "#L" + i + "#" + levels[i] + "#l\r\n";
                 }
-
                 cm.sendSimple(sendStr);
             } else if (status == 1) {
                 pqArea = selection + 1;
-
                 em = cm.getEventManager("CafePQ_" + pqArea);
+
                 if (em == null) {
-                    cm.sendOk("The CafePQ_" + pqArea + "has encountered an error.");
+                    cm.sendOk("The CafePQ_" + pqArea + " has encountered an error.");
                     cm.dispose();
-                    return;
-                } else if (cm.isUsingOldPqNpcStyle()) {
-                    status = 1;
-                    action(1, 0, 0);
                     return;
                 }
 
-                cm.sendSimple("#e#b<Party Quest: Premium Road - " + levels[selection] + ">\r\n#k#n" + em.getProperty("party") + "\r\n\r\nThe #p1052014# operates differently than the common ones. They do not use mesos or gachapon tickets, rather #rERASERS#k, that can be obtained by completing the missions held on the Premium Road. To go there, you must find partners and attend to a Party Quest. When teamed up and ready, have your #bparty leader#k talk to me.#b\r\n#L0#I want to participate in the party quest.\r\n#L1#I would like to " + (cm.getPlayer().isRecvPartySearchInviteEnabled() ? "disable" : "enable") + " Party Search.\r\n#L2#I would like to hear more details.");
-            } else if (status == 2) {
+                cm.sendSimple("#e#b<Party Quest: Premium Road - " + levels[selection] + ">\r\n#k#n" + em.getProperty("party") + "\r\n\r\n#L0#I want to participate in the party quest.\r\n#L1#I would like to " + (cm.getPlayer().isRecvPartySearchInviteEnabled() ? "disable" : "enable") + " Party Search.\r\n#L2#I would like to hear more details.");
+            } else if (status == 2) { // FIXED: Corrected status flow
                 if (selection == 0) {
                     if (cm.getParty() == null) {
                         cm.sendOk("You can participate in the party quest only if you are in a party.");
@@ -113,23 +87,33 @@ function action(mode, type, selection) {
                         cm.sendOk("Your party leader must talk to me to start this party quest.");
                         cm.dispose();
                     } else {
-                        var eli = em.getEligibleParty(cm.getParty());
-                        if (eli.size() > 0) {
-                            if (!em.startInstance(cm.getParty(), cm.getPlayer().getMap(), 1)) {
-                                cm.sendOk("Another party has already entered the #rParty Quest#k in this channel. Please try another channel, or wait for the current party to finish.");
-                            }
-                        } else {
-                            cm.sendOk("You cannot start this party quest yet, because either your party is not in the range size, some of your party members are not eligible to attempt it or they are not in this map. If you're having trouble finding party members, try Party Search.");
+                        // Allow solo entry if party size is at least 1
+                        var partySize = cm.getParty().getMembers().size();
+                        
+                        if (partySize < 1) {
+                            cm.sendOk("You must be in a party to enter.");
+                            cm.dispose();
+                            return;
                         }
 
+                        var eli = em.getEligibleParty(cm.getParty());
+
+                        // Check if at least 1 member (you) is eligible
+                        if (eli != null && eli.length >= 1) {
+                            if (!em.startInstance(cm.getParty(), cm.getPlayer().getMap(), 1)) {
+                                cm.sendOk("Another party is already inside. Please try another channel.");
+                            }
+                        } else {
+                            cm.sendOk("You do not meet the level requirements or are in the wrong map.");
+                        }
                         cm.dispose();
                     }
                 } else if (selection == 1) {
                     var psState = cm.getPlayer().toggleRecvPartySearchInvite();
-                    cm.sendOk("Your Party Search status is now: #b" + (psState ? "enabled" : "disabled") + "#k. Talk to me whenever you want to change it back.");
+                    cm.sendOk("Your Party Search status is now: #b" + (psState ? "enabled" : "disabled") + "#k.");
                     cm.dispose();
                 } else {
-                    cm.sendOk("#e#b<Party Quest: Premium Road>#k#n\r\nOn the maps ahead, you will face many common-leveled mobs to face on. Grind all the required coupons from them and give it to me. All members will then receive a eraser, corresponding with the level faced. Insert on the machine #bmany of the same eraser or multiple different ones#k to have a better chance on greater prizes.");
+                    cm.sendOk("#e#b<Party Quest: Premium Road>#k#n\r\nGrind coupons and exchange them for erasers!");
                     cm.dispose();
                 }
             }

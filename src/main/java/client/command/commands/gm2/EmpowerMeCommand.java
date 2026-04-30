@@ -27,8 +27,13 @@ import client.Character;
 import client.Client;
 import client.SkillFactory;
 import client.command.Command;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.Map;
 
 public class EmpowerMeCommand extends Command {
+    private static final long COOLDOWN_MS = 1000;
+    private static final Map<Integer, Long> lastUsed = new ConcurrentHashMap<>();
+
     {
         setDescription("Activate all useful buffs.");
     }
@@ -36,9 +41,26 @@ public class EmpowerMeCommand extends Command {
     @Override
     public void execute(Client c, String[] params) {
         Character player = c.getPlayer();
-        final int[] array = {2311003, 2301004, 1301007, 4101004, 2001002, 1101007, 1005, 2301003, 5121009, 1111002, 4111001, 4111002, 4211003, 4211005, 1321000, 2321004, 3121002};
+        
+        long now = System.currentTimeMillis();
+        long last = lastUsed.getOrDefault(player.getId(), 0L);
+        if (now - last < COOLDOWN_MS) {
+            player.dropMessage("Buff cooldown active. Wait " + ((COOLDOWN_MS - (now - last)) / 1000 + 1) + " seconds.");
+            return;
+        }
+        lastUsed.put(player.getId(), now);
+        
+        final int[] array = {2311003, 2301004, 1301007, 4101004, 2001002, 1101007, 2301003, 5121009, 1111002, 4111001, 4211003, 4211005, 1321000, 2321004, 3121002};
         for (int i : array) {
-            SkillFactory.getSkill(i).getEffect(SkillFactory.getSkill(i).getMaxLevel()).applyTo(player);
+            try {
+                SkillFactory.getSkill(i).getEffect(SkillFactory.getSkill(i).getMaxLevel()).applyTo(player);
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            } catch (Exception e) {
+                // Skip invalid skill IDs
+            }
         }
     }
 }

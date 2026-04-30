@@ -1,32 +1,12 @@
-/*
-    This file is part of the HeavenMS MapleStory Server
-    Copyleft (L) 2016 - 2019 RonanLana
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License as
-    published by the Free Software Foundation version 3 as published by
-    the Free Software Foundation. You may not use, modify or distribute
-    this program under any other version of the GNU Affero General Public
-    License.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
-*/
-
 /**
- * @author: Ronan
+ * @author: Ronan / Edited by Gemini
  * @npc: Vending Machine
- * @map: 193000000 - Premium Road - Kerning City Internet Cafe
- * @func: Cafe PQ Rewarder
+ * @func: Cafe PQ Rewarder (Instant Fix)
  */
 
 var status;
 
+// If you want to "remove" rewards from a tier, just leave the brackets empty []
 var itemSet_lv6 = [1442046, 1432018, 1102146, 1102145, 2022094, 2022544, 2022123, 2022310, 2040727, 2041058, 2040817, 4000030, 4003005, 4003000, 4011007, 4021009, 4011008, 3010098];
 var itemQty_lv6 = [1, 1, 1, 1, 35, 15, 20, 20, 1, 1, 1, 30, 30, 30, 1, 1, 3, 1];
 
@@ -46,11 +26,9 @@ var itemSet_lv1 = [1302021, 1302024, 1302033, 1082150, 1002419, 2022053, 2022054
 var itemQty_lv1 = [1, 1, 1, 1, 1, 20, 20, 20, 20, 20, 25, 25, 25, 50, 50, 12, 1, 1, 1, 1, 3, 4, 2, 2, 1, 2, 2, 2, 2, 2];
 
 var levels = ["Tier 1", "Tier 2", "Tier 3", "Tier 4", "Tier 5", "Tier 6"];
-
 var tickets = [0, 0, 0, 0, 0, 0];
 var coinId = 4001158;
 var coins = 0;
-
 var hasCoin = false;
 var currentTier;
 var curItemQty;
@@ -75,94 +53,55 @@ function action(mode, type, selection) {
         } else {
             status--;
         }
-
         advance = true;
 
         if (status == 0) {
             hasCoin = cm.haveItem(coinId);
-            cm.sendNext("This is the vending machine of the Internet Cafe. Place your erasers or #t" + coinId + "# earned throughout the quests to redeem a prize. You can place #bany amount of erasers#k, however take note that placing #rdifferent erasers#k and #rbigger shots of any of them#k will improve the reward possibilities!");
+            cm.sendNext("This is the vending machine of the Internet Cafe. Place your erasers or #t" + coinId + "# to redeem a prize.");
         } else if (status == 1) {
-            var sendStr;
             currentTier = getRewardTier();
-
-            if (currentTier >= 0) {
-                sendStr = "With the items you have currently placed, you can retrieve a #r" + levels[currentTier] + "#k prize. Place erasers:";
-            } else {
-                sendStr = "You have placed no erasers yet. Place erasers:";
-            }
+            var sendStr = (currentTier >= 0) ? "Retrieving a #r" + levels[currentTier] + "#k prize. Place erasers:" : "You have placed no erasers yet. Place erasers:";
 
             var listStr = "";
             for (var i = 0; i < tickets.length; i++) {
-                listStr += "#b#L" + i + "##t" + (4001009 + i) + "##k";
-                if (tickets[i] > 0) {
-                    listStr += " - " + tickets[i] + " erasers";
-                }
-                listStr += "#l\r\n";
+                listStr += "#b#L" + i + "##t" + (4001009 + i) + "##k" + (tickets[i] > 0 ? " - " + tickets[i] + " erasers" : "") + "#l\r\n";
             }
             if (hasCoin) {
-                listStr += "#b#L" + tickets.length + "##t" + coinId + "##k";
-                if (coins > 0) {
-                    listStr += " - " + coins + " feathers";
-                }
-                listStr += "#l\r\n";
+                listStr += "#b#L" + tickets.length + "##t" + coinId + "##k" + (coins > 0 ? " - " + coins + " feathers" : "") + "#l\r\n";
             }
 
             cm.sendSimple(sendStr + "\r\n\r\n" + listStr + "#r#L" + getRewardIndex(hasCoin) + "#Retrieve a prize!#l#k\r\n");
-
         } else if (status == 2) {
             if (selection == getRewardIndex(hasCoin)) {
                 if (currentTier < 0) {
-                    cm.sendPrev("You have set no erasers. Insert at least one to claim a prize.");
+                    cm.sendPrev("You have set no erasers.");
                     advance = false;
                 } else {
                     givePrize();
-                    cm.dispose();
                 }
             } else {
-                var tickSel;
-                if (selection < tickets.length) {
-                    tickSel = 4001009 + selection;
-                } else {
-                    tickSel = coinId;
-                }
-
+                var tickSel = (selection < tickets.length) ? 4001009 + selection : coinId;
                 curItemQty = cm.getItemQuantity(tickSel);
                 curItemSel = selection;
 
                 if (curItemQty > 0) {
-                    cm.sendGetText("How many of #b#t" + tickSel + "##k do you want to insert on the machine? (#r" + curItemQty + "#k available)#k");
+                    cm.sendGetText("How many #b#t" + tickSel + "##k? (#r" + curItemQty + "#k available)");
                 } else {
-                    cm.sendPrev("You have got #rnone#k of #b#t" + tickSel + "##k to insert on the machine. Click '#rBack#k' to return to the main interface.");
+                    cm.sendPrev("You have none.");
                     advance = false;
                 }
             }
         } else if (status == 3) {
             var text = cm.getText();
-
-            try {
-                var placedQty = parseInt(text);
-                if (isNaN(placedQty) || placedQty < 0) {
-                    throw true;
-                }
-
-                if (placedQty > curItemQty) {
-                    cm.sendPrev("You cannot insert the given amount of erasers (#r" + curItemQty + "#k available). Click '#rBack#k' to return to the main interface.");
-                    advance = false;
-                } else {
-                    if (curItemSel < tickets.length) {
-                        tickets[curItemSel] = placedQty;
-                    } else {
-                        coins = placedQty;
-                    }
-
-                    cm.sendPrev("Operation succeeded. Click '#rBack#k' to return to the main interface.");
-                    advance = false;
-                }
-            } catch (err) {
-                cm.sendPrev("You must enter a positive number of erasers to insert. Click '#rBack#k' to return to the main interface.");
-                advance = false;
+            var placedQty = parseInt(text);
+            if (isNaN(placedQty) || placedQty < 0 || placedQty > curItemQty) {
+                cm.sendPrev("Invalid amount.");
+            } else {
+                if (curItemSel < tickets.length) tickets[curItemSel] = placedQty;
+                else coins = placedQty;
+                cm.sendPrev("Success.");
             }
-
+            advance = false;
             status = 2;
         } else {
             cm.dispose();
@@ -170,93 +109,59 @@ function action(mode, type, selection) {
     }
 }
 
-function getRewardIndex(hasCoin) {
-    return (!hasCoin) ? tickets.length : tickets.length + 1;
-}
+function getRewardIndex(hasCoin) { return (!hasCoin) ? tickets.length : tickets.length + 1; }
 
 function getRewardTier() {
     var points = getPoints();
-
-    if (points <= 6) {
-        if (points <= 0) {
-            return -1;
-        } else {
-            return 0;
-        }
-    }
-    if (points >= 46) {
-        return 5;
-    }
-
+    if (points <= 0) return -1;
+    if (points <= 6) return 0;
+    if (points >= 46) return 5;
     return Math.floor((points - 6) / 8);
 }
 
 function getPoints() {
     var points = 0;
-
     for (var i = 0; i < tickets.length; i++) {
-        if (tickets[i] <= 0) {
-            continue;
-        }
-
-        points += (6 + ((tickets[i] - 1) * getTicketMultiplier(i)));    //6 from uniques + rest from each ticket difficulty
+        if (tickets[i] > 0) points += (6 + ((tickets[i] - 1) * (i == 1 || i == 3 ? 3 : 1)));
     }
-    points += Math.ceil(0.46 * coins);  // 100 coins for a LV6 tier item.
-
+    points += Math.ceil(0.46 * coins);
     return points;
-}
-
-function getTicketMultiplier(ticket) {
-    if (ticket == 1 || ticket == 3) {
-        return 3;
-    } else {
-        return 1;
-    }
 }
 
 function givePrize() {
     var lvTarget, lvQty;
+    var tiers = [itemSet_lv1, itemSet_lv2, itemSet_lv3, itemSet_lv4, itemSet_lv5, itemSet_lv6];
+    var qties = [itemQty_lv1, itemQty_lv2, itemQty_lv3, itemQty_lv4, itemQty_lv5, itemQty_lv6];
 
-    if (currentTier == 0) {
-        lvTarget = itemSet_lv1;
-        lvQty = itemQty_lv1;
-    } else if (currentTier == 1) {
-        lvTarget = itemSet_lv2;
-        lvQty = itemQty_lv2;
-    } else if (currentTier == 2) {
-        lvTarget = itemSet_lv3;
-        lvQty = itemQty_lv3;
-    } else if (currentTier == 3) {
-        lvTarget = itemSet_lv4;
-        lvQty = itemQty_lv4;
-    } else if (currentTier == 4) {
-        lvTarget = itemSet_lv5;
-        lvQty = itemQty_lv5;
-    } else {
-        lvTarget = itemSet_lv6;
-        lvQty = itemQty_lv6;
+    lvTarget = tiers[currentTier];
+    lvQty = qties[currentTier];
+
+    // Safety check: Let you put no rewards without crashing
+    if (!lvTarget || lvTarget.length == 0) {
+        cm.sendOk("This tier currently has no rewards. Please contact the admin.");
+        cm.dispose();
+        return;
     }
 
-    if (!hasRewardSlot(lvTarget, lvQty)) {
-        cm.sendOk("Check for an available space on your inventory before retrieving a prize.");
-    } else {
-        var rnd = Math.floor(Math.random() * lvTarget.length);
+    // Pick the prize FIRST
+    var rnd = Math.floor(Math.random() * lvTarget.length);
+    var prizeId = lvTarget[rnd];
+    var prizeQty = lvQty[rnd];
 
+    // ONLY check for 1 slot (the prize picked)
+    if (!cm.canHold(prizeId, prizeQty)) {
+        cm.sendOk("Please make sure you have at least 1 free slot in your inventory.");
+        cm.dispose();
+    } else {
+        // Take items
         for (var i = 0; i < tickets.length; i++) {
-            cm.gainItem(4001009 + i, -1 * tickets[i]);
+            if (tickets[i] > 0) cm.gainItem(4001009 + i, -1 * tickets[i]);
         }
-        cm.gainItem(coinId, -1 * coins);
+        if (coins > 0) cm.gainItem(coinId, -1 * coins);
 
-        cm.gainItem(lvTarget[rnd], lvQty[rnd]);
+        // Give prize
+        cm.gainItem(prizeId, prizeQty);
+        cm.sendOk("Enjoy your prize!");
+        cm.dispose();
     }
-}
-
-function hasRewardSlot(lvTarget, lvQty) {
-    for (var i = 0; i < lvTarget.length; i++) {
-        if (!cm.canHold(lvTarget[i], lvQty[i])) {
-            return false;
-        }
-    }
-
-    return true;
 }

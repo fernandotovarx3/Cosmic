@@ -342,7 +342,6 @@ public class CommandsExecutor {
 
         addCommand(new String[]{"help", "commands"}, HelpCommand.class);
         addCommand("droplimit", DropLimitCommand.class);
-        addCommand("clearslot", ClearSlotCommand.class);
         addCommand("time", TimeCommand.class);
         addCommand("credits", StaffCommand.class);
         addCommand("uptime", UptimeCommand.class);
@@ -379,6 +378,7 @@ public class CommandsExecutor {
         addCommand("buffme", 1, BuffMeCommand.class);
         addCommand("empowerme", 1, EmpowerMeCommand.class);
         addCommand("goto", 1, GotoCommand.class);
+        
 
         commandsNameDesc.add(levelCommandsCursor);
     }
@@ -398,11 +398,12 @@ public class CommandsExecutor {
         addCommand("bomb", 2, BombCommand.class);
         addCommand("dc", 2, DcCommand.class);
         addCommand("cleardrops", 2, ClearDropsCommand.class);
+        addCommand("clearslot", 1, ClearSlotCommand.class);
         addCommand("clearsavelocs", 2, ClearSavedLocationsCommand.class);
         addCommand("warp", 2, WarpCommand.class);
         addCommand(new String[]{"warphere", "summon"}, 2, SummonCommand.class);
         addCommand(new String[]{"warpto", "reach", "follow"}, 2, ReachCommand.class);
-        addCommand("gmshop", 2, GmShopCommand.class);
+        addCommand("gmshop", 3, GmShopCommand.class);
         addCommand("heal", 2, HealCommand.class);
         addCommand("item", 2, ItemCommand.class);
         addCommand("drop", 2, ItemDropCommand.class);

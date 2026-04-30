@@ -1,28 +1,8 @@
 /*
-	This file is part of the OdinMS Maple Story Server
-    Copyright (C) 2008 Patrick Huy <patrick.huy@frz.cc> 
-                       Matthias Butz <matze@odinms.de>
-                       Jan Christian Meyer <vimes@odinms.de>
-
-    This program is free software: you can redistribute it and/or modify
-    it under the terms of the GNU Affero General Public License version 3
-    as published by the Free Software Foundation. You may not use, modify
-    or distribute this program under any other version of the
-    GNU Affero General Public License.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU Affero General Public License for more details.
-
-    You should have received a copy of the GNU Affero General Public License
-    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+    This file is part of the OdinMS Maple Story Server
+    Modified for Solo Entry - Cosmic v83
+    NPC: Mark of the Squad (Horntail Gatekeeper)
 */
-/*Mark of the Squad
- *
- *@author Alan (SharpAceX)
- *@author Ronan
- */
 
 var status = 0;
 var expedition;
@@ -41,7 +21,6 @@ function start() {
 }
 
 function action(mode, type, selection) {
-
     player = cm.getPlayer();
     expedition = cm.getExpedition(exped);
     em = cm.getEventManager("HorntailBattle");
@@ -55,13 +34,13 @@ function action(mode, type, selection) {
         }
 
         if (status == 0) {
-            if (player.getLevel() < exped.getMinLevel() || player.getLevel() > exped.getMaxLevel()) { //Don't fit requirement, thanks Conrad
+            if (player.getLevel() < exped.getMinLevel() || player.getLevel() > exped.getMaxLevel()) {
                 cm.sendOk("You do not meet the criteria to battle " + expedBoss + "!");
                 cm.dispose();
-            } else if (expedition == null) { //Start an expedition
+            } else if (expedition == null) {
                 cm.sendSimple("#e#b<Expedition: " + expedName + ">\r\n#k#n" + em.getProperty("party") + "\r\n\r\nWould you like to assemble a team to take on #r" + expedBoss + "#k?\r\n#b#L1#Lets get this going!#l\r\n\#L2#No, I think I'll wait a bit...#l");
                 status = 1;
-            } else if (expedition.isLeader(player)) { //If you're the leader, manage the exped
+            } else if (expedition.isLeader(player)) {
                 if (expedition.isInProgress()) {
                     cm.sendOk("Your expedition is already in progress, for those who remain battling lets pray for those brave souls.");
                     cm.dispose();
@@ -69,25 +48,24 @@ function action(mode, type, selection) {
                     cm.sendSimple(list);
                     status = 2;
                 }
-            } else if (expedition.isRegistering()) { //If the expedition is registering
-                if (expedition.contains(player)) { //If you're in it but it hasn't started, be patient
+            } else if (expedition.isRegistering()) {
+                if (expedition.contains(player)) {
                     cm.sendOk("You have already registered for the expedition. Please wait for #r" + expedition.getLeader().getName() + "#k to begin it.");
                     cm.dispose();
-                } else { //If you aren't in it, you're going to get added
+                } else {
                     cm.sendOk(expedition.addMember(cm.getPlayer()));
                     cm.dispose();
                 }
-            } else if (expedition.isInProgress()) { //Only if the expedition is in progress
-                if (expedition.contains(player)) { //If you're registered, warp you in
+            } else if (expedition.isInProgress()) {
+                if (expedition.contains(player)) {
                     var eim = em.getInstance(expedName + player.getClient().getChannel());
                     if (eim.getIntProperty("canJoin") == 1) {
                         eim.registerPlayer(player);
                     } else {
                         cm.sendOk("Your expedition already started the battle against " + expedBoss + ". Lets pray for those brave souls.");
                     }
-
                     cm.dispose();
-                } else { //If you're not in by now, tough luck
+                } else {
                     cm.sendOk("Another expedition has taken the initiative to challenge " + expedBoss + ", lets pray for those brave souls.");
                     cm.dispose();
                 }
@@ -109,13 +87,10 @@ function action(mode, type, selection) {
                 } else {
                     cm.sendOk("An unexpected error has occurred when starting the expedition, please try again later.");
                 }
-
                 cm.dispose();
-
             } else if (selection == 2) {
                 cm.sendOk("Sure, not everyone's up to challenging " + expedBoss + ".");
                 cm.dispose();
-
             }
         } else if (status == 2) {
             if (selection == 1) {
@@ -139,7 +114,8 @@ function action(mode, type, selection) {
                 cm.sendSimple(text);
                 status = 6;
             } else if (selection == 2) {
-                var min = exped.getMinSize();
+                // CHANGE: Hardcoded to 1 to bypass the Java requirement of 6
+                var min = 1;
 
                 var size = expedition.getMemberList().size();
                 if (size < min) {
@@ -156,7 +132,6 @@ function action(mode, type, selection) {
                 cm.endExpedition(expedition);
                 cm.sendOk("The expedition has now ended. Sometimes the best strategy is to run away.");
                 cm.dispose();
-
             }
         } else if (status == 4) {
             if (em == null) {
@@ -172,9 +147,7 @@ function action(mode, type, selection) {
                 cm.dispose();
                 return;
             }
-
             cm.dispose();
-
         } else if (status == 6) {
             if (selection > 0) {
                 var banned = expedMembers.get(selection - 1);

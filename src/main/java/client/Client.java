@@ -1083,6 +1083,8 @@ public class Client extends ChannelInboundHandlerAdapter {
         }
 
         Server.getInstance().unregisterLoginState(this);
+        NPCScriptManager.getInstance().dispose(this);
+        QuestScriptManager.getInstance().dispose(this);
 
         this.accountName = null;
         this.macs = null;
