@@ -7,7 +7,7 @@ worlds:
     server_message: ""
     event_message: ""
     why_am_i_recommended: ""
-    channels: 20
+    channels: 5
     exp_rate: 3
     meso_rate: 3
     drop_rate: 3
@@ -162,7 +162,7 @@ server:
     DB_URL_FORMAT: "jdbc:mysql://cosmic-db-1:3306/cosmic?characterEncoding=latin1"
     DB_HOST: "cosmic-db-1"
     DB_USER: "root"
-    DB_PASS: "Tobedog12.12."
+    DB_PASS: "(DB_PASS=$BLANK******************{DB_PASS})
     INIT_CONNECTION_POOL_TIMEOUT: 90    # Seconds
 
     #Login Configuration
